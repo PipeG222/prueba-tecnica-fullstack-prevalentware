@@ -1,12 +1,25 @@
 // pages/api/me.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { prisma } from '../../lib/prisma';
+import { prisma } from '@/lib/prisma'; // usa alias en lugar de ../../lib/prisma
+
+type GetSessionResponse = {
+  user?: { id?: string } | null;
+};
+
+type MeApiResponse = {
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    image: string | null;
+    role: 'ADMIN' | 'USER';
+  } | null;
+};
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse<MeApiResponse>
 ) {
-  // logs para depurar
   console.log(
     '===> /api/me (via /api/auth/get-session) cookies:',
     req.headers.cookie
@@ -30,15 +43,15 @@ export default async function handler(
       return res.status(200).json({ user: null });
     }
 
-    let data: any = null;
+    let data: GetSessionResponse | null = null;
     try {
-      data = JSON.parse(raw);
+      data = JSON.parse(raw) as GetSessionResponse;
     } catch (e) {
       console.warn('[/api/me] JSON.parse error:', e);
       return res.status(200).json({ user: null });
     }
 
-    const userId: string | undefined = data?.user?.id;
+    const userId = data?.user?.id as string | undefined;
     console.log('[/api/me] session userId:', userId);
 
     if (!userId) {

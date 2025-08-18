@@ -20,9 +20,9 @@ export default withRole(
         orderBy: { date: 'desc' },
       });
 
-      const lines = [
-        ['concept', 'type', 'amount', 'date', 'user'].join(','),
-        ...rows.map((r) =>
+      const header = ['concept', 'type', 'amount', 'date', 'user'].join(',');
+      const body = rows
+        .map((r) =>
           [
             JSON.stringify(r.concept),
             r.type,
@@ -30,12 +30,13 @@ export default withRole(
             r.date.toISOString().slice(0, 10),
             JSON.stringify(r.user?.name ?? r.user?.email ?? '-'),
           ].join(',')
-        ),
-      ];
+        )
+        .join('\n');
 
-      res.status(200).send(lines.join('\n'));
-    } catch (err: any) {
-      console.error('[API] /api/reports/csv', err);
+      return res.status(200).send([header, body].join('\n'));
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      console.error('[API] /api/reports/csv', error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   }

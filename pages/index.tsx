@@ -1,5 +1,6 @@
 // pages/index.tsx
 import Head from 'next/head';
+import Link from 'next/link';
 import { Header } from '../components/Header';
 import { authClient } from '@/lib/auth/client';
 
@@ -50,7 +51,6 @@ export default function Landing() {
               <li>• API documentada con OpenAPI/Swagger</li>
             </ul>
           </div>
-
           {/* Panel lateral “preview” */}
           <div className='rounded-2xl border bg-white p-4 shadow-sm'>
             <div className='rounded-xl border bg-slate-50 p-4'>
@@ -58,12 +58,11 @@ export default function Landing() {
                 <h3 className='font-semibold'>Resumen</h3>
                 <span className='text-xs text-slate-500'>Demo</span>
               </div>
+
               <div className='grid grid-cols-3 gap-3'>
                 <div className='rounded-lg border bg-white p-3'>
                   <div className='text-xs text-slate-500'>Ingresos</div>
-                  <div className='text-lg font-bold text-emerald-700'>
-                    $12.000
-                  </div>
+                  <div className='text-lg font-bold text-emerald-700'>$12.000</div>
                 </div>
                 <div className='rounded-lg border bg-white p-3'>
                   <div className='text-xs text-slate-500'>Egresos</div>
@@ -74,13 +73,11 @@ export default function Landing() {
                   <div className='text-lg font-bold'>$7.500</div>
                 </div>
               </div>
-              <div className='mt-4 flex justify-end'>
-                <a
-                  href='/reports'
-                  className='text-sm text-blue-600 hover:underline'
-                >
+
+              <div className='pt-3'>
+                <Link href='/reports' className='text-sm text-blue-600 hover:underline'>
                   Ver reportes →
-                </a>
+                </Link>
               </div>
             </div>
           </div>

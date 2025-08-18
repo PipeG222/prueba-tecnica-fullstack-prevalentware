@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { authClient } from '@/lib/auth/client';
 
 type SessionUser = {
@@ -47,12 +48,12 @@ export function AuthButtons() {
         <span className='text-sm text-slate-700'>
           {user.name ?? user.email}
         </span>
-        <a
+        <Link
           href='/movements'
           className='px-3 py-2 rounded bg-emerald-600 text-white text-sm'
         >
           Ir al panel
-        </a>
+        </Link>
         <button
           onClick={() => authClient.signOut().then(() => location.reload())}
           className='px-3 py-2 rounded bg-slate-800 text-white text-sm'

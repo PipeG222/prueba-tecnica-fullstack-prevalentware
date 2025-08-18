@@ -1,8 +1,9 @@
 // pages/users/index.tsx
 import { useEffect, useMemo, useState } from 'react';
-import { Header } from '../../components/Header'; // o "@/components/Header" si tienes alias
+import { Header } from '@/components/Header'; // usa el alias para evitar la regla no-restricted-imports
 
 type Role = 'ADMIN' | 'USER';
+
 type UserRow = {
   id: string;
   name: string;
@@ -17,13 +18,13 @@ const authFetch = (input: RequestInfo | URL, init: RequestInit = {}) =>
   fetch(input, { credentials: 'include', ...init });
 
 // Garantiza JSON (evita tragar HTML de error)
-async function asJson(res: Response) {
+async function asJson<T = unknown>(res: Response): Promise<T> {
   const ct = res.headers.get('content-type') || '';
   const text = await res.text();
   if (!ct.includes('application/json')) {
     throw new Error(`Respuesta no-JSON ${res.status}: ${text.slice(0, 160)}`);
   }
-  return JSON.parse(text);
+  return JSON.parse(text) as T;
 }
 
 export default function UsersPage() {
@@ -47,11 +48,15 @@ export default function UsersPage() {
     setErr(null);
     try {
       const res = await authFetch('/api/users');
-      const data = await asJson(res);
-      if (!res.ok) throw new Error(data?.error ?? 'Error al listar usuarios');
+      const data = await asJson<UserRow[]>(res);
+      if (!res.ok)
+        throw new Error(
+          (data && (data as any)?.error) ?? 'Error al listar usuarios'
+        );
       setRows(data);
-    } catch (e: any) {
-      setErr(e.message || String(e));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setErr(msg);
     } finally {
       setLoading(false);
     }
@@ -94,15 +99,20 @@ export default function UsersPage() {
           role: form.role,
         }),
       });
-      const data = await asJson(res);
-      if (!res.ok) throw new Error(data?.error ?? 'No se pudo guardar');
+      const data = await asJson<UserRow>(res);
+      if (!res.ok)
+        throw new Error(
+          (data as Partial<UserRow & { error?: string }>)?.error ??
+            'No se pudo guardar'
+        );
       setRows((prev) =>
         prev.map((r) => (r.id === editingId ? { ...r, ...data } : r))
       );
       cancelEdit();
-    } catch (e: any) {
-      alert(e.message || String(e));
-      setErr(e.message || String(e));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      alert(msg);
+      setErr(msg);
     } finally {
       setSaving(false);
     }
@@ -118,13 +128,14 @@ export default function UsersPage() {
       const res = await authFetch(`/api/users/${u.id}/role`, {
         method: 'POST',
       });
-      const data = await asJson(res);
+      const data = await asJson<{ role: Role; error?: string }>(res);
       if (!res.ok) throw new Error(data?.error ?? 'No se pudo cambiar el rol');
       setRows((prev) =>
-        prev.map((r) => (r.id === u.id ? { ...r, role: data.role as Role } : r))
+        prev.map((r) => (r.id === u.id ? { ...r, role: data.role } : r))
       );
-    } catch (e: any) {
-      alert(e.message || String(e));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      alert(msg);
     }
   }
 

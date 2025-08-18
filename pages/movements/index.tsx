@@ -1,6 +1,6 @@
 // pages/movements/index.tsx
 import { useEffect, useMemo, useState } from 'react';
-import { Header } from '../../components/Header'; // si tienes alias: import { Header } from "@/components/Header";
+import { Header } from '../../components/Header';
 
 type Movement = {
   id: string;
@@ -16,13 +16,13 @@ const authFetch = (input: RequestInfo | URL, init: RequestInit = {}) =>
   fetch(input, { credentials: 'include', ...init });
 
 // Helper: asegura JSON (evita tragar HTML de error)
-async function asJson(res: Response) {
+async function asJson<T = unknown>(res: Response): Promise<T> {
   const ct = res.headers.get('content-type') || '';
   const text = await res.text();
   if (!ct.includes('application/json')) {
     throw new Error(`Respuesta no-JSON ${res.status}: ${text.slice(0, 160)}`);
   }
-  return JSON.parse(text);
+  return JSON.parse(text) as T;
 }
 
 // Helper: fecha para <input type="date"> sin desfase por timezone
@@ -31,6 +31,9 @@ function toLocalInputDate(iso: string) {
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   return d.toISOString().slice(0, 10);
 }
+
+// Normalizador de mensajes de error
+const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 export default function MovementsPage() {
   const [rows, setRows] = useState<Movement[]>([]);
@@ -53,10 +56,7 @@ export default function MovementsPage() {
 
   // Edición inline
   const [editingId, setEditingId] = useState<string | null>(null);
-  const editing = useMemo(
-    () => rows.find((r) => r.id === editingId) ?? null,
-    [rows, editingId]
-  );
+  // (Se eliminó la variable `editing` que no se usaba)
   const [editForm, setEditForm] = useState<{
     type: 'INCOME' | 'EXPENSE';
     concept: string;
@@ -93,11 +93,13 @@ export default function MovementsPage() {
     setErr(null);
     try {
       const res = await authFetch('/api/movements');
-      const data = await asJson(res);
-      if (!res.ok) throw new Error(data?.error ?? 'Error cargando movimientos');
+      const data = await asJson<Movement[]>(res);
+      if (!res.ok)
+        throw new Error((data as any)?.error ?? 'Error cargando movimientos');
       setRows(data);
-    } catch (e: any) {
-      setErr(e.message || String(e));
+    } catch (e) {
+      const msg = errMsg(e);
+      setErr(msg);
     } finally {
       setLoading(false);
     }
@@ -125,16 +127,17 @@ export default function MovementsPage() {
       const data = await asJson(res);
       if (!res.ok)
         throw new Error(
-          data?.error ??
+          (data as any)?.error ??
             (res.status === 403
               ? 'No autorizado (solo ADMIN)'
               : 'Error creando')
         );
       setNewMv({ type: 'INCOME', concept: '', amount: 0, date: '' });
       load();
-    } catch (e: any) {
-      alert(e.message || String(e));
-      setErr(e.message || String(e));
+    } catch (e) {
+      const msg = errMsg(e);
+      alert(msg);
+      setErr(msg);
     } finally {
       setCreating(false);
     }
@@ -169,10 +172,10 @@ export default function MovementsPage() {
           date: editForm.date, // "YYYY-MM-DD"
         }),
       });
-      const data = await asJson(res);
+      const data = await asJson<Movement>(res);
       if (!res.ok)
         throw new Error(
-          data?.error ??
+          (data as any)?.error ??
             (res.status === 403
               ? 'No autorizado (solo ADMIN)'
               : 'Error guardando')
@@ -181,8 +184,9 @@ export default function MovementsPage() {
         prev.map((r) => (r.id === editingId ? { ...r, ...data } : r))
       );
       cancelEdit();
-    } catch (e: any) {
-      alert(e.message || String(e));
+    } catch (e) {
+      const msg = errMsg(e);
+      alert(msg);
     } finally {
       setSaving(false);
     }
@@ -203,8 +207,9 @@ export default function MovementsPage() {
         );
       }
       setRows((prev) => prev.filter((r) => r.id !== id));
-    } catch (e: any) {
-      alert(e.message || String(e));
+    } catch (e) {
+      const msg = errMsg(e);
+      alert(msg);
     } finally {
       setRemovingId(null);
     }
@@ -223,8 +228,9 @@ export default function MovementsPage() {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    } catch (e: any) {
-      alert(e.message || String(e));
+    } catch (e) {
+      const msg = errMsg(e);
+      alert(msg);
     }
   }
 

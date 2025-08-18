@@ -4,6 +4,13 @@ import type { AuthedReq } from '@/lib/secure';
 import { withRole } from '@/lib/secure';
 import { prisma } from '@/lib/prisma';
 
+type SeriesPoint = {
+  month: string;
+  income: number;
+  expense: number;
+  balance: number;
+};
+
 export default withRole(
   'ADMIN',
   async (_req: AuthedReq, res: NextApiResponse) => {
@@ -15,8 +22,8 @@ export default withRole(
         orderBy: { date: 'asc' },
       });
 
-      let income = 0,
-        expense = 0;
+      let income = 0;
+      let expense = 0;
       const monthly: Record<
         string,
         { income: number; expense: number; balance: number }
@@ -34,15 +41,16 @@ export default withRole(
         m.balance = m.income - m.expense;
       }
 
-      const series = Object.entries(monthly)
+      const series: SeriesPoint[] = Object.entries(monthly)
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([month, v]) => ({ month, ...v }));
 
       return res
         .status(200)
         .json({ income, expense, balance: income - expense, series });
-    } catch (err: any) {
-      console.error('[API] /api/reports/summary', err);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[API] /api/reports/summary', msg);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   }

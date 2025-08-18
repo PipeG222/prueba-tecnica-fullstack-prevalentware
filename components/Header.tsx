@@ -1,3 +1,4 @@
+// components/Header.tsx
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { authClient } from '@/lib/auth/client';
@@ -11,6 +12,22 @@ type Me = {
   role: Role;
 };
 
+// Respuesta esperada de /api/me
+type MeApiResponse = {
+  user?: Me | null;
+};
+
+// Respuesta esperada de /api/auth/get-session
+type SessionResponse = {
+  user?: { id?: string } | null;
+};
+
+// Respuesta esperada de /api/users/[id]/role
+type ToggleRoleResponse = {
+  role?: Role;
+  error?: string;
+};
+
 export function Header() {
   const [user, setUser] = useState<Me | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,32 +35,42 @@ export function Header() {
 
   useEffect(() => {
     let mounted = true;
+
     (async () => {
       try {
         const res = await fetch(`/api/me?ts=${Date.now()}`, {
           credentials: 'same-origin',
           headers: { 'cache-control': 'no-store' },
         });
+
         const txt = await res.text();
-        let data: any = null;
+        let data: MeApiResponse | null = null;
         try {
-          data = JSON.parse(txt);
-        } catch {}
+          data = JSON.parse(txt) as MeApiResponse;
+        } catch {
+          data = null;
+        }
+
         if (!mounted) return;
 
         if (res.ok && data?.user) {
-          setUser(data.user as Me);
+          setUser(data.user);
         } else {
+          // Fallback: leer sesión cruda
           const s = await fetch('/api/auth/get-session', {
             credentials: 'same-origin',
             headers: { 'cache-control': 'no-store' },
           });
           const sTxt = await s.text();
-          let sJson: any = null;
+
+          let sJson: SessionResponse | null = null;
           try {
-            sJson = JSON.parse(sTxt);
-          } catch {}
-          const sesUserId = sJson?.user?.id as string | undefined;
+            sJson = JSON.parse(sTxt) as SessionResponse;
+          } catch {
+            sJson = null;
+          }
+
+          const sesUserId = sJson?.user?.id;
 
           if (sesUserId) {
             const res2 = await fetch(`/api/me?ts=${Date.now()}&from=session`, {
@@ -52,7 +79,7 @@ export function Header() {
             });
             const txt2 = await res2.text();
             try {
-              const js2 = JSON.parse(txt2);
+              const js2 = JSON.parse(txt2) as MeApiResponse;
               setUser(js2?.user ?? null);
             } catch {
               setUser(null);
@@ -65,10 +92,11 @@ export function Header() {
         if (!mounted) return;
         setUser(null);
       } finally {
-        if (!mounted) return;
-        setLoading(false);
+        // No usamos "return" dentro de finally para evitar no-unsafe-finally
+        if (mounted) setLoading(false);
       }
     })();
+
     return () => {
       mounted = false;
     };
@@ -81,37 +109,46 @@ export function Header() {
 
   async function toggleRole() {
     if (!user) return;
+
     if (
       user.role === 'ADMIN' &&
       !confirm('Vas a convertir tu rol a USER. ¿Confirmas?')
-    )
+    ) {
       return;
+    }
+
     setToggling(true);
     try {
       const res = await fetch(`/api/users/${user.id}/role`, { method: 'POST' });
       const raw = await res.text();
-      let data: any = null;
+
+      let payload: ToggleRoleResponse | null = null;
       try {
-        data = JSON.parse(raw);
-      } catch {}
+        payload = JSON.parse(raw) as ToggleRoleResponse;
+      } catch {
+        payload = null;
+      }
 
       if (!res.ok) {
         if (res.status === 403) {
           alert('No tienes permisos para cambiar el rol (se requiere ADMIN).');
         } else if (res.status === 409) {
           alert(
-            data?.error ??
+            payload?.error ??
               'No puedes dejar la organización sin administradores.'
           );
         } else {
-          alert(data?.error ?? `Error cambiando rol (${res.status})`);
+          alert(payload?.error ?? `Error cambiando rol (${res.status})`);
         }
         return;
       }
 
-      setUser((u) => (u ? { ...u, role: data.role as Role } : u));
-    } catch (e: any) {
-      alert(e.message || String(e));
+      if (payload?.role) {
+        setUser((u) => (u ? { ...u, role: payload!.role! } : u));
+      }
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      alert(message);
     } finally {
       setToggling(false);
     }
@@ -157,13 +194,17 @@ export function Header() {
                 {user.name ?? user.email}
               </span>
               <span
-                className={`text-[11px] px-1.5 py-0.5 rounded w-fit ${isAdmin ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}
+                className={`text-[11px] px-1.5 py-0.5 rounded w-fit ${
+                  isAdmin
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-slate-100 text-slate-700'
+                }`}
               >
                 {user.role}
               </span>
             </div>
 
-            {/* 🔒 Ahora SIEMPRE visible para usuarios logueados */}
+            {/* 🔒 Siempre visible para usuarios logueados */}
             <button
               onClick={toggleRole}
               disabled={toggling}

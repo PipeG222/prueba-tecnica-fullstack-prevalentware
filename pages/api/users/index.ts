@@ -12,6 +12,11 @@ const createUserSchema = z.object({
   role: z.enum(['ADMIN', 'USER']).default('USER'),
 });
 
+// type guard para errores de Prisma con .code
+function hasPrismaCode(e: unknown): e is { code: string } {
+  return typeof e === 'object' && e !== null && 'code' in e;
+}
+
 export default withRole(
   'ADMIN',
   async (req: AuthedReq, res: NextApiResponse) => {
@@ -35,8 +40,9 @@ export default withRole(
       if (req.method === 'POST') {
         res.setHeader('Cache-Control', 'no-store');
         const parsed = createUserSchema.safeParse(req.body);
-        if (!parsed.success)
+        if (!parsed.success) {
           return res.status(400).json({ error: parsed.error.flatten() });
+        }
 
         try {
           const created = await prisma.user.create({
@@ -44,7 +50,8 @@ export default withRole(
               name: parsed.data.name,
               email: parsed.data.email,
               phone: parsed.data.phone ?? null,
-              role: parsed.data.role, // En registro vía BetterAuth ya subes a ADMIN por el evento
+              // Nota: en el registro vía BetterAuth el evento ya te sube a ADMIN
+              role: parsed.data.role,
             },
             select: {
               id: true,
@@ -56,8 +63,8 @@ export default withRole(
             },
           });
           return res.status(201).json(created);
-        } catch (e: any) {
-          if (e?.code === 'P2002') {
+        } catch (e) {
+          if (hasPrismaCode(e) && e.code === 'P2002') {
             return res
               .status(409)
               .json({ error: 'El correo ya está registrado.' });
@@ -69,8 +76,9 @@ export default withRole(
 
       res.setHeader('Allow', 'GET, POST');
       return res.status(405).end();
-    } catch (err: any) {
-      console.error('[API] /api/users', err);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[API] /api/users', msg);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
