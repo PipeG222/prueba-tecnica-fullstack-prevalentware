@@ -1,15 +1,15 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { z } from "zod";
-import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
-import { withAuth, withRole, type AuthedReq } from "@/lib/secure";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { z } from 'zod';
+import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
+import { withAuth, withRole, type AuthedReq } from '@/lib/secure';
 
 // Validación de creación
 const movementCreateSchema = z.object({
-  type: z.enum(["INCOME", "EXPENSE"]),
+  type: z.enum(['INCOME', 'EXPENSE']),
   concept: z.string().min(1).max(255),
   amount: z.preprocess(
-    (v) => (typeof v === "string" ? Number(v.replace(",", ".")) : v),
+    (v) => (typeof v === 'string' ? Number(v.replace(',', '.')) : v),
     z.number().positive()
   ),
   date: z.coerce.date(), // acepta "YYYY-MM-DD"
@@ -18,7 +18,7 @@ const movementCreateSchema = z.object({
 // GET: ambos roles (ADMIN ve todo; USER solo lo suyo)
 async function getHandler(req: AuthedReq, res: NextApiResponse) {
   const { type, from, to } = req.query as {
-    type?: "INCOME" | "EXPENSE";
+    type?: 'INCOME' | 'EXPENSE';
     from?: string;
     to?: string;
   };
@@ -32,22 +32,28 @@ async function getHandler(req: AuthedReq, res: NextApiResponse) {
   }
 
   // RBAC por datos: si no es ADMIN, filtra por su userId
-  const me = await prisma.user.findUnique({ where: { id: req.userId }, select: { role: true } });
-  if (me?.role !== "ADMIN") where.userId = req.userId;
+  const me = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { role: true },
+  });
+  if (me?.role !== 'ADMIN') where.userId = req.userId;
 
   const rows = await prisma.movement.findMany({
     where,
-    orderBy: { date: "desc" },
+    orderBy: { date: 'desc' },
     include: { user: { select: { name: true, email: true } } },
   });
 
-  return res.status(200).json(rows.map((r) => ({ ...r, amount: Number(r.amount) })));
+  return res
+    .status(200)
+    .json(rows.map((r) => ({ ...r, amount: Number(r.amount) })));
 }
 
 // POST: solo ADMIN crea
 async function postHandler(req: AuthedReq, res: NextApiResponse) {
   const parsed = movementCreateSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  if (!parsed.success)
+    return res.status(400).json({ error: parsed.error.flatten() });
 
   const created = await prisma.movement.create({
     data: {
@@ -64,9 +70,12 @@ async function postHandler(req: AuthedReq, res: NextApiResponse) {
 }
 
 // Export del handler combinado
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === "GET") return withAuth(getHandler)(req, res);            // USER o ADMIN
-  if (req.method === "POST") return withRole("ADMIN", postHandler)(req, res); // solo ADMIN
-  res.setHeader("Allow", "GET, POST");
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method === 'GET') return withAuth(getHandler)(req, res); // USER o ADMIN
+  if (req.method === 'POST') return withRole('ADMIN', postHandler)(req, res); // solo ADMIN
+  res.setHeader('Allow', 'GET, POST');
   return res.status(405).end();
 }

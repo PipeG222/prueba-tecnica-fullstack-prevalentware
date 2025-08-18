@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
-import { authClient } from "@/lib/auth/client";
+import { useEffect, useState } from 'react';
+import { authClient } from '@/lib/auth/client';
 
 type SessionUser = {
   id: string;
   name?: string | null;
   email?: string | null;
   image?: string | null;
-  role?: "ADMIN" | "USER";
+  role?: 'ADMIN' | 'USER';
 };
 
 export function AuthButtons() {
@@ -15,7 +15,7 @@ export function AuthButtons() {
 
   useEffect(() => {
     let mounted = true;
-    fetch("/api/me", { credentials: "same-origin" })
+    fetch('/api/me', { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!mounted) return;
@@ -31,31 +31,31 @@ export function AuthButtons() {
   }, []);
 
   if (loading) {
-    return <div className="animate-pulse h-8 w-40 rounded bg-slate-200" />;
+    return <div className='animate-pulse h-8 w-40 rounded bg-slate-200' />;
   }
 
   if (user) {
     return (
-      <div className="flex items-center gap-3">
+      <div className='flex items-center gap-3'>
         {user.image && (
           <img
             src={user.image}
-            alt={user.name ?? user.email ?? "user"}
-            className="h-8 w-8 rounded-full border"
+            alt={user.name ?? user.email ?? 'user'}
+            className='h-8 w-8 rounded-full border'
           />
         )}
-        <span className="text-sm text-slate-700">
+        <span className='text-sm text-slate-700'>
           {user.name ?? user.email}
         </span>
         <a
-          href="/movements"
-          className="px-3 py-2 rounded bg-emerald-600 text-white text-sm"
+          href='/movements'
+          className='px-3 py-2 rounded bg-emerald-600 text-white text-sm'
         >
           Ir al panel
         </a>
         <button
           onClick={() => authClient.signOut().then(() => location.reload())}
-          className="px-3 py-2 rounded bg-slate-800 text-white text-sm"
+          className='px-3 py-2 rounded bg-slate-800 text-white text-sm'
         >
           Cerrar sesión
         </button>
@@ -64,16 +64,16 @@ export function AuthButtons() {
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className='flex items-center gap-2'>
       <button
-        onClick={() => authClient.signIn.social({ provider: "github" })}
-        className="px-3 py-2 rounded bg-blue-600 text-white text-sm"
+        onClick={() => authClient.signIn.social({ provider: 'github' })}
+        className='px-3 py-2 rounded bg-blue-600 text-white text-sm'
       >
         Iniciar sesión
       </button>
       <button
-        onClick={() => authClient.signIn.social({ provider: "github" })}
-        className="px-3 py-2 rounded border border-blue-600 text-blue-600 text-sm"
+        onClick={() => authClient.signIn.social({ provider: 'github' })}
+        className='px-3 py-2 rounded border border-blue-600 text-blue-600 text-sm'
       >
         Registrarse
       </button>
