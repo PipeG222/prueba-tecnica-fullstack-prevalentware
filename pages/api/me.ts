@@ -1,74 +1,79 @@
 // pages/api/me.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { prisma } from '@/lib/prisma'; // usa alias en lugar de ../../lib/prisma
+import { prisma } from '@/lib/prisma';
 
-type GetSessionResponse = {
-  user?: { id?: string } | null;
-};
+type GetSessionResponse =
+  | {
+      user?: { id?: string | null } | null;
+    }
+  | null;
 
 type MeApiResponse = {
-  user: {
-    id: string;
-    name: string | null;
-    email: string | null;
-    image: string | null;
-    role: 'ADMIN' | 'USER';
-  } | null;
+  user:
+    | {
+        id: string;
+        name: string | null;
+        email: string | null;
+        image: string | null;
+        role: 'ADMIN' | 'USER';
+      }
+    | null;
 };
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<MeApiResponse>
 ) {
-  console.log(
-    '===> /api/me (via /api/auth/get-session) cookies:',
-    req.headers.cookie
-  );
-
-  res.setHeader('cache-control', 'no-store');
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
 
   try {
-    // 1) Pedimos la sesión a nuestro propio handler de Better Auth
-    const r = await fetch(
-      `${process.env.BETTER_AUTH_URL}/api/auth/get-session`,
-      {
-        headers: { cookie: req.headers.cookie || '' }, // reenviamos cookies
-      }
-    );
+    // Usa el mismo origen del request si no hay override explícito
+    const rawHost =
+      req.headers.host ||
+      process.env.VERCEL_URL || // en Vercel viene sin protocolo
+      'localhost:3000';
 
-    const raw = await r.text();
-    console.log('[/api/me] get-session status:', r.status, 'raw:', raw);
+    const isLocal =
+      rawHost.includes('localhost') || rawHost.includes('127.0.0.1');
+
+    const proto =
+      (req.headers['x-forwarded-proto'] as string) || (isLocal ? 'http' : 'https');
+
+    const baseUrl =
+      process.env.BETTER_AUTH_URL || `${proto}://${rawHost}`;
+
+    // 1) Obtener sesión del handler de Better Auth (reenviando cookies)
+    const r = await fetch(`${baseUrl}/api/auth/get-session`, {
+      headers: { cookie: req.headers.cookie ?? '' },
+      cache: 'no-store',
+    });
 
     if (!r.ok) {
       return res.status(200).json({ user: null });
     }
 
-    let data: GetSessionResponse | null = null;
+    const raw = await r.text();
+
+    let data: GetSessionResponse = null;
     try {
       data = JSON.parse(raw) as GetSessionResponse;
-    } catch (e) {
-      console.warn('[/api/me] JSON.parse error:', e);
+    } catch {
       return res.status(200).json({ user: null });
     }
 
-    const userId = data?.user?.id as string | undefined;
-    console.log('[/api/me] session userId:', userId);
-
+    const userId = data?.user?.id ?? undefined;
     if (!userId) {
       return res.status(200).json({ user: null });
     }
 
-    // 2) Cargamos el usuario desde la DB (incluye rol)
+    // 2) Cargar el usuario (incluye rol)
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, name: true, email: true, image: true, role: true },
     });
 
-    console.log('[/api/me] prisma user:', user);
-
     return res.status(200).json({ user: user ?? null });
-  } catch (err) {
-    console.error('[/api/me] error:', err);
-    return res.status(200).json({ user: null }); // no exponemos errores
+  } catch {
+    return res.status(200).json({ user: null });
   }
 }
