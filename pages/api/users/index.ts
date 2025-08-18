@@ -50,7 +50,6 @@ export default withRole(
               name: parsed.data.name,
               email: parsed.data.email,
               phone: parsed.data.phone ?? null,
-              // Nota: en el registro vía BetterAuth el evento ya te sube a ADMIN
               role: parsed.data.role,
             },
             select: {
