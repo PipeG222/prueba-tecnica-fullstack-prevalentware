@@ -1,56 +1,68 @@
 // pages/_app.tsx
 import type { AppProps } from 'next/app';
-import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
+import { useRef, useEffect } from 'react';
 import '@/styles/globals.css';
+
+let installed = false;
+
+// Se instala inmediatamente en el browser (no SSR)
+if (typeof window !== 'undefined' && !installed) {
+  installed = true;
+  const originalFetch = window.fetch.bind(window);
+
+  window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    // asegúrate de que `credentials: 'include'` quede al final (última palabra gana)
+    const mergedInit: RequestInit = { ...init, credentials: init?.credentials ?? 'include' };
+    const res = await originalFetch(input as any, mergedInit);
+
+    try {
+      // Normaliza URL
+      const urlStr =
+        typeof input === 'string'
+          ? input
+          : input instanceof URL
+          ? input.href
+          : input instanceof Request
+          ? input.url
+          : '';
+
+      const isApi = urlStr.includes('/api/');
+      if (isApi && (res.status === 401 || res.status === 403)) {
+        const evt = new CustomEvent('api-auth-error', { detail: { status: res.status, url: urlStr } });
+        window.dispatchEvent(evt);
+      }
+    } catch {
+      // no-op
+    }
+
+    return res;
+  };
+}
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const guardOnce = useRef(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    const onAuthError = (e: Event) => {
+      if (guardOnce.current) return;
+      guardOnce.current = true;
 
-    const originalFetch = window.fetch;
-    window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-      const res = await originalFetch(input, {
-        credentials: 'include', // asegura cookies de sesión
-        ...init,
-      });
+      const detail = (e as CustomEvent).detail as { status: number; url: string };
+      alert(detail.status === 401
+        ? 'Tu sesión no es válida o expiró. Inicia sesión nuevamente.'
+        : 'No tienes permisos para esta acción.'
+      );
+      router.push('/');
 
-      try {
-        // Detecta llamadas a tu API
-        const url = typeof input === 'string' ? input : (input as Request).url;
-        const isApi = url.startsWith('/api/') || url.includes('/api/');
-
-        if (isApi && (res.status === 401 || res.status === 403)) {
-          // evita disparar muchos alerts/redirects si hay varias llamadas en paralelo
-          if (!guardOnce.current) {
-            guardOnce.current = true;
-            const msg =
-              res.status === 401
-                ? 'Tu sesión no es válida o expiró. Inicia sesión nuevamente.'
-                : 'No tienes permisos para esta acción.';
-            // Muestra aviso
-            alert(msg);
-            // Redirige al Home (o a / si prefieres)
-            router.push('/');
-            // suelta el bloqueo tras un breve tiempo para no bloquear futuros avisos
-            setTimeout(() => {
-              guardOnce.current = false;
-            }, 1500);
-          }
-        }
-      } catch {
-        // no-op
-      }
-
-      return res;
+      setTimeout(() => (guardOnce.current = false), 1500);
     };
 
-    return () => {
-      window.fetch = originalFetch;
-    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('api-auth-error', onAuthError);
+      return () => window.removeEventListener('api-auth-error', onAuthError);
+    }
   }, [router]);
 
   return <Component {...pageProps} />;
