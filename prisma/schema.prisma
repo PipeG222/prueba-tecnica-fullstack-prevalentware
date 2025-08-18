@@ -4,42 +4,65 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+//-----------------
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum MovementType {
+  INCOME
+  EXPENSE
 }
 
 model User {
   id            String    @id
   name          String
-  email         String
+  email         String    @unique
   emailVerified Boolean
   image         String?
   createdAt     DateTime
   updatedAt     DateTime
+
+  // Relaciones Better Auth
   sessions      Session[]
   accounts      Account[]
 
-  @@unique([email])
+  // NUEVO: Rol con default ADMIN
+  role          Role      @default(ADMIN)
+
+  // Opcional: teléfono para gestión de usuarios
+  phone         String?
+
+  // Relación con movimientos
+  movements     Movement[]
+
   @@map("user")
 }
 
 model Session {
   id        String   @id
   expiresAt DateTime
-  token     String
+  token     String   @unique
   createdAt DateTime
   updatedAt DateTime
   ipAddress String?
   userAgent String?
+
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
   @@map("session")
 }
 
@@ -71,4 +94,23 @@ model Verification {
   updatedAt  DateTime?
 
   @@map("verification")
+}
+
+// ───────────────────────────────
+// Movimientos financieros
+// ───────────────────────────────
+model Movement {
+  id        String       @id @default(cuid())
+  type      MovementType
+  concept   String
+  amount    Decimal      @db.Decimal(14, 2)
+  date      DateTime
+
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@map("movement")
 }
