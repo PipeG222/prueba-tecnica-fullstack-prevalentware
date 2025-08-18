@@ -1,9 +1,11 @@
 // pages/index.tsx
 import Head from "next/head";
-import Link from "next/link";
 import { Header } from "../components/Header";
+import { authClient } from "@/lib/auth/client";
 
 export default function Landing() {
+  const startNow = () => authClient.signIn.social({ provider: "github" });
+
   return (
     <>
       <Head>
@@ -21,27 +23,24 @@ export default function Landing() {
         <section className="mx-auto max-w-6xl px-4 py-16 grid gap-8 md:grid-cols-2 items-center">
           <div className="space-y-6">
             <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
-              Controla tus <span className="text-blue-600">finanzas</span> con
-              claridad
+              Controla tus <span className="text-blue-600">finanzas</span> con claridad
             </h1>
             <p className="text-slate-600 text-lg">
-              Registra ingresos y egresos, administra usuarios y descarga
-              reportes. Autenticación con GitHub y control de acceso por roles.
+              Registra ingresos y egresos, administra usuarios y descarga reportes.
+              Autenticación con GitHub y control de acceso por roles.
             </p>
+
             <div className="flex flex-wrap gap-3">
-              <a
-                href="/api/auth/signin/github"
-                className="px-5 py-3 rounded bg-blue-600 text-white"
+              <button
+                type="button"
+                onClick={startNow}
+                className="px-5 py-3 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
               >
                 Empezar ahora
-              </a>
-              <Link
-                href="/api/movements"
-                className="px-5 py-3 rounded border border-slate-300 text-slate-800"
-              >
-                Ver demo
-              </Link>
+              </button>
+              {/* Se elimina "Ver demo" como pediste */}
             </div>
+
             <ul className="mt-6 grid gap-2 text-sm text-slate-600">
               <li>• Next.js (pages) + TypeScript + Tailwind</li>
               <li>• UI con accesibilidad y semántica</li>
@@ -73,12 +72,9 @@ export default function Landing() {
                 </div>
               </div>
               <div className="mt-4 flex justify-end">
-                <Link
-                  href="/reports"
-                  className="text-sm text-blue-600 hover:underline"
-                >
+                <a href="/reports" className="text-sm text-blue-600 hover:underline">
                   Ver reportes →
-                </Link>
+                </a>
               </div>
             </div>
           </div>
