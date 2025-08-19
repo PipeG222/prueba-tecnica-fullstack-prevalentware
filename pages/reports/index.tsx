@@ -9,6 +9,7 @@ import {
   Tooltip,
   CartesianGrid,
   ResponsiveContainer,
+  Legend,
 } from 'recharts';
 
 type Summary = {
@@ -58,19 +59,20 @@ export default function ReportsPage() {
   return (
     <>
       <Header />
-      <main className='p-6 space-y-6'>
-        <header className='flex items-center justify-between'>
-          <h1 className='text-2xl font-bold'>Reportes (ADMIN)</h1>
-          <div className='flex gap-2'>
+      <main className="p-6 space-y-6">
+        {/* Header responsive */}
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-bold">Reportes (ADMIN)</h1>
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={downloadCsv}
-              className='px-3 py-2 rounded bg-emerald-600 text-white text-sm'
+              className="px-3 py-2 rounded bg-emerald-600 text-white text-sm"
             >
               Descargar CSV
             </button>
             <button
               onClick={load}
-              className='px-3 py-2 rounded bg-slate-800 text-white text-sm'
+              className="px-3 py-2 rounded bg-slate-800 text-white text-sm disabled:opacity-60"
               disabled={loading}
             >
               {loading ? 'Actualizando...' : 'Refrescar'}
@@ -80,41 +82,70 @@ export default function ReportsPage() {
 
         {data && (
           <>
-            <section className='grid grid-cols-3 gap-3'>
-              <div className='rounded border p-4 bg-white'>
-                <div className='text-sm text-slate-500'>Ingresos</div>
-                <div className='text-xl font-semibold'>
-                  {data.income.toLocaleString()}
+            {/* Cards responsive */}
+            <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="rounded border p-4 bg-white">
+                <div className="text-sm text-slate-500">Ingresos</div>
+                <div className="text-xl font-semibold">
+                  {data.income.toLocaleString('es-CO')}
                 </div>
               </div>
-              <div className='rounded border p-4 bg-white'>
-                <div className='text-sm text-slate-500'>Egresos</div>
-                <div className='text-xl font-semibold'>
-                  {data.expense.toLocaleString()}
+              <div className="rounded border p-4 bg-white">
+                <div className="text-sm text-slate-500">Egresos</div>
+                <div className="text-xl font-semibold">
+                  {data.expense.toLocaleString('es-CO')}
                 </div>
               </div>
-              <div className='rounded border p-4 bg-white'>
-                <div className='text-sm text-slate-500'>Saldo</div>
+              <div className="rounded border p-4 bg-white">
+                <div className="text-sm text-slate-500">Saldo</div>
                 <div
-                  className={`text-xl font-semibold ${data.balance >= 0 ? 'text-emerald-700' : 'text-red-700'}`}
+                  className={`text-xl font-semibold ${
+                    data.balance >= 0 ? 'text-emerald-700' : 'text-red-700'
+                  }`}
                 >
-                  {data.balance.toLocaleString()}
+                  {data.balance.toLocaleString('es-CO')}
                 </div>
               </div>
             </section>
 
-            <section className='rounded border p-4 bg-white'>
-              <h2 className='font-semibold mb-4'>Evolución mensual</h2>
-              <div style={{ width: '100%', height: 320 }}>
-                <ResponsiveContainer>
-                  <LineChart data={data.series}>
-                    <CartesianGrid strokeDasharray='3 3' />
-                    <XAxis dataKey='month' />
+            {/* Gráfico responsive + colores distintos */}
+            <section className="rounded border p-4 bg-white">
+              <h2 className="font-semibold mb-4">Evolución mensual</h2>
+              <div className="w-full h-64 sm:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={data.series} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip />
-                    <Line type='monotone' dataKey='income' />
-                    <Line type='monotone' dataKey='expense' />
-                    <Line type='monotone' dataKey='balance' />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="income"
+                      name="Ingresos"
+                      stroke="#10b981" // emerald-500
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 5 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="expense"
+                      name="Egresos"
+                      stroke="#ef4444" // red-500
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 5 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="balance"
+                      name="Saldo"
+                      stroke="#3b82f6" // blue-500
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 5 }}
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

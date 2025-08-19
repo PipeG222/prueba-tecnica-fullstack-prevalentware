@@ -118,3 +118,4 @@ El objetivo de esta prueba técnica es evaluar tus habilidades en el desarrollo 
 ![alt text](Evidencia/Movements_test.png)
 ![alt text](Evidencia/role_test.png)
 ![alt text](Evidencia/me_test.png)
+![alt text](Evidencia/reportes.png)
