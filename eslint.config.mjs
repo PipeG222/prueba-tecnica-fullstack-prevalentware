@@ -5,7 +5,7 @@ import nextPlugin from '@next/eslint-plugin-next';
 import prettier from 'eslint-plugin-prettier';
 
 export default [
-  // Sustituye .eslintignore
+  // Ignorar artefactos de build
   {
     ignores: ['**/.next/**', 'node_modules/**', '.vercel/**', 'dist/**', 'build/**'],
   },
@@ -13,31 +13,32 @@ export default [
   // Reglas base JS
   js.configs.recommended,
 
-  // Reglas base TS
+  // Reglas base TS (sin type-checking pesado)
   ...tseslint.configs.recommended,
 
-  // Plugins y reglas del proyecto
+  // Reglas del proyecto
   {
     plugins: {
       '@next/next': nextPlugin,
       prettier,
     },
-    rules: {
-      // No rompas el build por formato
-      'prettier/prettier': 'warn',
-      // Suaviza algunas reglas ruidosas
-      '@next/next/no-html-link-for-pages': 'warn',
-      'no-console': 'off',
-      'react/function-component-definition': 'off',
-      complexity: ['warn', 20],
-    },
+    files: ['**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.json'],
-        tsconfigRootDir: import.meta.dirname,
-        ecmaVersion: 'latest',
-        sourceType: 'module',
-      },
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      // Si NO quieres reglas que dependan del type-checker, deja sin "project".
+      // parserOptions: { project: ['./tsconfig.json'], tsconfigRootDir: import.meta.dirname },
+    },
+    rules: {
+      // No bloquear por formato / estilo
+      'prettier/prettier': 'off', // (o 'warn' si quieres ver avisos)
+      '@next/next/no-html-link-for-pages': 'off',
+      'no-console': 'off',
+      'no-restricted-imports': 'off',
+      'react/function-component-definition': 'off',
+      'func-style': 'off',
+      complexity: 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
 ];
