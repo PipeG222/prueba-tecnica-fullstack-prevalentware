@@ -17,6 +17,6 @@
     },
     "target": "esnext"
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "pages/movements"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "pages/movements", "vitest.config.mts"],
   "exclude": ["node_modules"]
 }
