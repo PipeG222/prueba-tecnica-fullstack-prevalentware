@@ -153,7 +153,7 @@ if (typeof window !== 'undefined' && !installed) {
   };
 }
 
-export default function App({ Component, pageProps }: AppProps) {
+const App = ({ Component, pageProps }: AppProps) => {
   const router = useRouter();
   const guardOnce = useRef(false);
 
