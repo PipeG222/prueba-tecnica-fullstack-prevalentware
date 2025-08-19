@@ -1,121 +1,145 @@
-## Prueba Técnica para Desarrollador Fullstack
+# Prueba Técnica para Desarrollador Fullstack
 
 ### Introducción
 
-El objetivo de esta prueba técnica es evaluar tus habilidades en el desarrollo de una aplicación fullstack. Deberás implementar un sistema de gestión de ingresos y egresos, la gestión de usuarios y la generación de reportes. El proyecto cuenta con [wireframes](<https://www.figma.com/design/2PINjveveJJ9ZAAwxwNoRK/Wireframes-(Copy)?node-id=0-1&t=6q0Q0id8YnjH9fJt-1>) que pueden servir de guía para el candidato. Sin embargo, el diseño de la interfaz de usuario es libre.
+El objetivo de esta prueba técnica fue implementar un sistema de gestión de ingresos y egresos, gestión de usuarios y generación de reportes financieros.
+Se trabajó con **Next.js (pages router)**, **Prisma**, **Postgres**, **Better Auth con GitHub** y **Tailwind/Shadcn** para la interfaz.
 
-### Requisitos del Proyecto
+⚠️ Importante: de los **4 días disponibles** solo pude trabajar efectivamente en **2 días**, lo cual limitó el alcance. Algunas funcionalidades quedaron pendientes (paginación, filtros y búsqueda en los CRUDs).
 
-#### Funcionalidades Principales
+---
 
-1. **Roles y Permisos**
-   - **Roles:**
-     - **Usuario:** Solo puede acceder a la gestión de movimientos.
-     - **Administrador:** Puede ver los reportes, editar usuarios y agregar movimientos.
-   - **Nota:** Para efectos de prueba, todos los nuevos usuarios deben ser automáticamente asignados con el rol "ADMIN".
+### Funcionalidades Implementadas
 
-2. **Home**
-   - Página de inicio con un menú principal que permite la navegación a tres secciones:
-     - Sistema de gestión de ingresos y gastos (disponible para todos los roles)
-     - Gestión de usuarios (solo para administradores)
-     - Reportes (solo para administradores)
+1. **Roles y Permisos (RBAC)**
 
-3. **Sistema de Gestión de Ingresos y Gastos**
-   - **Vista de Ingresos y Egresos**
-     - Implementar una tabla que muestre los ingresos y egresos registrados con las siguientes columnas:
-       - Concepto
-       - Monto
-       - Fecha
-       - Usuario
-     - Botón "Nuevo" para agregar un nuevo ingreso o egreso (solo para administradores).
-   - **Formulario de Nuevo Ingreso/Egreso**
-     - Formulario con los campos:
-       - Monto
-       - Concepto
-       - Fecha
-     - Botón para guardar el nuevo movimiento.
+   * Usuario: accede a movimientos.
+   * Administrador: accede a reportes, usuarios y movimientos.
+   * Funcionalidad de **cambiar de rol** incluida para facilitar la revisión de la prueba.
 
-4. **Gestión de Usuarios** (solo para administradores)
-   - **Vista de Usuarios**
-     - Tabla que muestre la lista de usuarios con las siguientes columnas:
-       - Nombre
-       - Correo
-       - Teléfono
-       - Acciones (editar usuario)
-   - **Formulario de Edición de Usuario**
-     - Formulario con los campos:
-       - Nombre
-       - Rol
-     - Botón para guardar los cambios.
+2. **Gestión de Ingresos y Egresos**
 
-5. **Reportes** (solo para administradores)
-   - Mostrar un gráfico de movimientos financieros.
-   - Mostrar el saldo actual.
-   - Botón para descargar el reporte en formato CSV.
+   * Tabla con ingresos/egresos.
+   * Creación de nuevos movimientos (solo ADMIN).
 
-### Requisitos Técnicos
+3. **Gestión de Usuarios** (solo ADMIN)
 
-- **Tecnologías y Herramientas:**
-  - **Frontend:**
-    - Next.js utilizando `pages` router.
-    - TypeScript.
-    - Tailwind CSS.
-    - Shadcn para componentes de la interfaz de usuario.
-    - NextJS API routes para comunicación con el backend.
-  - **Backend:**
-    - NextJS API routes para implementar endpoints REST.
-    - Base de datos de Postgres en Supabase.
-    - **Documentación de API:** Implementar una ruta `/api/docs` que exponga la documentación del API usando OpenAPI/Swagger. Cada endpoint creado debe estar completamente documentado con sus parámetros, respuestas y ejemplos.
-  - **Protección de Datos:**
-    - Implementar control de acceso basado en roles (RBAC) para asegurar que solo los usuarios autorizados puedan acceder a ciertas funcionalidades y datos.
-    - Proteger el backend para que rechace conexiones no autenticadas.
-  - **Autenticación:**
-    - Utilizar [Better Auth](https://www.better-auth.com/) con [GitHub](https://github.com/settings/developers) como proveedor de autenticación y [Prisma](https://prisma.io) como adaptador para la autenticación por sesiones de base de datos.
-    - **IMPORTANTE:** Todos los nuevos usuarios que se registren deben ser automáticamente asignados con el rol "ADMIN" para facilitar las pruebas de la aplicación.
-  - **Pruebas unitarias** - El candidato debe agregar al menos 3 pruebas unitarias donde considere necesario.
-  - **Despliegue:**
-    - Desplegar el proyecto en Vercel.
+   * Listado de usuarios con rol editable.
 
-### Entregables
+4. **Reportes** (solo ADMIN)
 
-1. **Código Fuente:**
-   - Repositorio en GitHub con el código fuente del proyecto.
-   - Incluir un archivo README con instrucciones claras sobre cómo ejecutar el proyecto localmente y cómo desplegarlo en Vercel.
+   * Saldo actual.
+   * Gráfico de evolución mensual (responsive y con colores diferenciados).
+   * Descarga de CSV.
 
-2. **Despliegue:**
-   - Proyecto desplegado en Vercel con la URL proporcionada.
+5. **Autenticación**
 
-### Criterios de Evaluación
+   * Login con GitHub vía Better Auth.
+   * Nuevos usuarios asignados automáticamente como **ADMIN**.
 
-- **Funcionalidad:**
-  - Cumplimiento de todos los requisitos funcionales.
-  - Correcta implementación del CRUD para ingresos, egresos y usuarios.
-  - Generación y descarga de reportes en formato CSV.
+6. **Seed de Base de Datos**
 
-- **Calidad del Código:**
-  - Calidad y claridad del código.
-  - Uso adecuado de las mejores prácticas de desarrollo.
-  - Estructura del proyecto.
-  - Documentación completa de la API con OpenAPI/Swagger.
+   * Se incluye un **seed de prueba** en Prisma para cargar datos iniciales y facilitar la revisión.
 
-- **Diseño y UX:**
-  - Usabilidad de la interfaz.
-  - Implementación de un diseño atractivo.
+---
 
-- **Pruebas y Documentación:**
-  - Cobertura de pruebas unitarias.
-  - Calidad de los comentarios dentro del proyecto.
+### Aspectos Técnicos
 
-- **Seguridad:**
-  - Implementación efectiva de control de acceso basado en roles (RBAC).
-  - Protección adecuada de los datos sensibles.
+* **Frontend:** Next.js, TypeScript, Tailwind, Shadcn.
+* **Backend:** Next.js API routes con Prisma.
+* **DB:** PostgreSQL (Supabase, puerto 6543 con pooling).
+* **Auth:** Better Auth + GitHub.
+* **Pruebas unitarias:** con **Vitest**, se agregaron **3 pruebas** principales:
 
-- **Notas**:
-  - El aplicativo no debe contener diseño responsivo.
-  - El candidato puede utilizar el código cargado en este repositorio. Sin embargo, esta no es una condición necesaria y el candidato puede iniciar el proyecto de 0 si lo desea.
-  - El candidato puede cambiar las versiones de las librerías si lo considera necesario.
-  - El candidato debe compartir el acceso al repositorio de GitHub y el .env a los correos mlopera@prevalentware.com, jdsanchez@prevalentware.com y dfsorza@prevalentware.com
+  * Validación de schemas de movimientos.
+  * Endpoint de cambio de rol de usuario.
+  * Endpoint `/api/me` (datos del usuario autenticado).
+
+---
+
+### Pendientes
+
+* [ ] Paginación en listados.
+* [ ] Filtros avanzados en los movimientos.
+* [ ] Búsqueda en usuarios y movimientos.
+
+---
+
+### Cómo ejecutar el proyecto
+
+1. Clonar el repo.
+
+   ```bash
+   git clone <repo_url>
+   cd <repo_name>
+   ```
+
+2. Instalar dependencias.
+
+   ```bash
+   bun install
+   ```
+
+3. Ejecutar migraciones de Prisma.
+
+   ```bash
+   bunx prisma migrate dev
+   ```
+
+4. Ejecutar el seed de prueba.
+
+   ```bash
+   bunx tsx prisma/seed.ts
+   ```
+
+5. Levantar el servidor en local.
+
+   ```bash
+   bun dev
+   ```
+
+6. Correr las pruebas unitarias.
+
+   ```bash
+   bun test
+   ```
+
+---
+
+### `.env`
+
+En el proyecto se incluye un archivo **`.env.example`**.
+El archivo **`.env` real** fue compartido por correo como solicitó la prueba.
+
+Ejemplo de variables:
+
+```env
+DATABASE_URL="postgresql://<user>:<pass>@<host>:6543/<db>?sslmode=require&pgbouncer=true&connection_limit=1"
+BETTER_AUTH_URL=http://localhost:3000
+NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000
+
+GITHUB_CLIENT_ID=<client_id>
+GITHUB_CLIENT_SECRET=<client_secret>
+```
+
+---
+
+### Evidencias
+
+#### Pruebas unitarias
+
 ![alt text](Evidencia/Movements_test.png)
 ![alt text](Evidencia/role_test.png)
 ![alt text](Evidencia/me_test.png)
+
+#### Funcionalidades
+
 ![alt text](Evidencia/reportes.png)
+![alt text](Evidencia/Ingresos_gastos.png)
+![alt text](Evidencia/Users.png)
+
+
+- **Notas**:
+  -  Contiene diseño responsivo.
+  - Se utilizo el codigo pre-cargado pero se actualizaron algunas funcionalidades..
+  - El candidato debe compartir el acceso al repositorio de GitHub y el .env a los correos mlopera@prevalentware.com, jdsanchez@prevalentware.com y dfsorza@prevalentware.com
